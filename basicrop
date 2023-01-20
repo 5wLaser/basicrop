@@ -22,7 +22,7 @@ fehlauncher() {
 	fehPID=$!
 echo '
 c
-	echo "crop" >> /tmp/apoc/basicrop/keylog
+	echo "crop" >> /tmp/$USER/basicrop/keylog
 u
 	echo "undo" >> /tmp/$USER/basicrop/keylog
 q
