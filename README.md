@@ -13,7 +13,7 @@ These deps can be easily replaced with other programs. `hacksaw` can be replaced
 ## instructions
 Set screen dimensions in the file (default is 1920x1080).
 
-Arg 1 is input file, arg 2 is output. If output isn't specified, the input will always be overwritten.
+Usage: `basicrop [INFILE] [OUTFILE]`. If OUTFILE isn't specified, INFILE will always be overwritten.
 - 'c' to crop
 - 'u' to undo
 - 'A' to toggle anti-aliasing
