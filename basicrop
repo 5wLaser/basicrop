@@ -11,6 +11,10 @@
 # 'shift' + 'Return' to overwrite regardless.
 
 # 1st arg is input file, 2nd arg is output. overwrites input if 2nd arg not specified.
+
+screenW=1920
+screenH=1080
+
 [ -n "$1" ] && INPUT="$1" || echo "Syntax: \$1 = input file, \$2 = output file"
 [ -n "$2" ] && OUTPUT="$2" || OUTPUT="$1"
 
@@ -41,8 +45,6 @@ shift + Return
 cropmath(){
 	eval $cropString
 	eval "$(gm identify -format sourceWidth=%w\ sourceHeight=%h $pointerFile)"	# variables for dimensions of source image
-	screenW=1920
-	screenH=1080
 	aspectScreen=$(echo "scale=16; $screenW/$screenH" | bc)		# find aspect ratios
 	aspectFile=$(echo "scale=16; $sourceWidth/$sourceHeight"| bc)
 
@@ -61,9 +63,9 @@ cropmath(){
 
 		caseIn="sides"
 	fi
-	echo $cropTrim
+#	echo $cropTrim
 
-	echo $cropPosX $cropPosY $cropWidth $cropHeight
+#	echo $cropPosX $cropPosY $cropWidth $cropHeight
 	case $caseIn in		#trims the crop if it goes out of bounds
 		sides)
 			if [ $cropPosX -lt $cropTrim ]; then
@@ -73,7 +75,7 @@ cropmath(){
 			if [ $(($cropPosX + $cropWidth)) -gt $(($screenW - $cropTrim)) ]; then
 				cropWidth=$(($cropWidth - (($cropPosX + $cropWidth) - ($screenW - $cropTrim))))
 			fi
-			echo $cropPosX $cropWidth
+#			echo $cropPosX $cropWidth
 			;;
 		tops)
 			if [ $cropPosY -lt $cropTrim ]; then
@@ -83,14 +85,14 @@ cropmath(){
 			if [ $(($cropPosY + $cropHeight)) -gt $(($screenH - $cropTrim)) ]; then
 				cropHeight=$(($cropHeight - (($cropPosY + $cropHeight) - ($screenH - $cropTrim))))
 			fi
-			echo $cropPosY $cropHeight
+#			echo $cropPosY $cropHeight
 			;;
 	esac
 		# Now that the crop dimensions have been cleaned up, they must be downscaled to
 		# work with the smaller source image. This will also support upscaling.
-	echo $scale
-	echo $screenW $screenH $sourceWidth $sourceHeight
-	echo $cropWidth $cropHeight $cropPosX $cropPosY
+#	echo $scale
+#	echo $screenW $screenH $sourceWidth $sourceHeight
+#	echo $cropWidth $cropHeight $cropPosX $cropPosY
 	case $caseIn in
 		sides)
 				# In order for the big-screen measurements from hacksaw to work with
@@ -109,7 +111,7 @@ cropmath(){
 
 	cropWidth=$(echo "scale=0; ($(echo "scale=16; $cropWidth*$scale" | bc)+0.5)/1" | bc)
 	cropHeight=$(echo "scale=0; ($(echo "scale=16; $cropHeight*$scale" | bc)+0.5)/1" | bc)
-	echo $cropWidth $cropHeight $cropPosX $cropPosY
+#	echo $cropWidth $cropHeight $cropPosX $cropPosY
 }
 
 keylogger(){
@@ -127,54 +129,46 @@ keylogger(){
 editoptions(){
 	case $keyInput in
 		crop)
-			echo cropping.
+			echo cropping
 			cropString=$(hacksaw -f cropPosX=%x' 'cropPosY=%y' 'cropWidth=%w' 'cropHeight=%h)
 			if [ $? -ne 0 ]; then
 				keyInput="cancel"
 				editoptions
 			fi
-			exitBool=0
 			;;
 		undo)
-			echo undoing.
+			echo undoing
 			kill $fehPID
 			unset cropString
-			exitBool=0
 			;;
 		save)
-			echo saving
 			if [ $i -eq 0 ]; then
-				echo 'same file. cancelling.'
-				kill $fehPID
-				rm /tmp/$USER/basicrop/*
+				echo 'same file. overwriting...'
+				keyInput="overwrite"
+				editoptions
 			else
-				kill $fehPID
+				notify-send "Saving"
 				mv $pointerFile $OUTPUT
+				kill $fehPID
 				rm /tmp/$USER/basicrop/*
 			fi
 			unset cropString
-			exitBool=1
+			exitBool=true
 			;;
 		cancel)
-			echo cancelling.
+			notify-send "Cancelling"
 			kill $fehPID
 			rm /tmp/$USER/basicrop/*
 			unset cropString
-			exitBool=1
+			exitBool=true
 			;;
 		overwrite)
-			echo overwriting.
-			if [ $i -eq 0 ]; then
-				echo 'same file. cancelling...'
-				kill $fehPID
-				rm /tmp/$USER/basicrop/*
-			else
-				kill $fehPID
-				mv $pointerFile $INPUT
-				rm /tmp/$USER/basicrop/*
-			fi
+			notify-send "Overwriting"
+			kill $fehPID
+			mv $pointerFile $INPUT
+			rm /tmp/$USER/basicrop/*
 			unset cropString
-			exitBool=1
+			exitBool=true
 			;;
 		*)
 			echo error.
@@ -189,7 +183,7 @@ editoptions(){
 edit() {
 	pointerFile=$INPUT
 	i=0
-	until [ $exitBool -eq 1 ]; do
+	until [ $exitBool ]; do
 		if [ "$keyInput" = "undo" ]; then
 
 			if [ $i -le 0 ]; then
@@ -203,8 +197,8 @@ edit() {
 				pointerFile="/tmp/$USER/basicrop/$(($i - 1)).png"
 			fi
 		fi
-		echo "i: $i"
-		echo "pointerFile: $pointerFile"
+#		echo "i: $i"
+#		echo "pointerFile: $pointerFile"
 		fehlauncher $pointerFile
 		unset keyInput
 		keylogger # sets a variable
@@ -227,4 +221,5 @@ edit() {
 }
 echo $INPUT
 echo $OUTPUT
+notify-send "Editing"
 edit
