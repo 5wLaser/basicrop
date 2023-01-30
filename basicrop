@@ -161,6 +161,7 @@ editoptions(){
 			rm /tmp/$USER/basicrop/*
 			unset cropString
 			exitBool=true
+			exitCode=1
 			;;
 		overwrite)
 			notify-send "Overwriting"
@@ -223,3 +224,4 @@ echo $INPUT
 echo $OUTPUT
 notify-send "Editing"
 edit
+exit $exitCode
